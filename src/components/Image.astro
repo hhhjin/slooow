@@ -1,0 +1,33 @@
+---
+interface Props {
+  url: string;
+  width?: number;
+  height?: number;
+  blurDataUrl?: string;
+  loading?: "eager" | "lazy";
+  fill?: boolean;
+  cover?: boolean;
+}
+
+const { url, blurDataUrl, loading, cover } = Astro.props;
+---
+
+{
+  cover && (
+    <div class="relative w-full h-full">
+      <span
+        style={{
+          background: blurDataUrl ? `url(${blurDataUrl})` : undefined,
+          backgroundSize: "contain",
+        }}
+        class="absolute w-full h-full"
+      />
+      <img
+        class="absolute w-full h-full object-cover"
+        src={url}
+        loading={loading}
+        decoding="auto"
+      />
+    </div>
+  )
+}

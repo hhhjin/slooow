@@ -1,0 +1,32 @@
+---
+import Image from "./Image.astro";
+
+interface Props {
+  title: string;
+  titleColor: string;
+  href: string;
+  coverImage: {
+    url: string;
+    blurDataUrl?: string;
+  };
+}
+
+const { title, titleColor, href, coverImage } = Astro.props;
+---
+
+<a href={href}>
+  <div
+    style={{ paddingTop: (4 / 3) * 100 + "%" }}
+    class="relative w-full h-full transition-shadow shadow hover:shadow-2xl"
+  >
+    <h2
+      class="title absolute top-0 px-8 py-12 text-neutral-100 text-2xl lg:text-3xl font-extrabold"
+      style={{ color: titleColor }}
+    >
+      {title}
+    </h2>
+    <div class="absolute inset-0 -z-10">
+      <Image url={coverImage.url} blurDataUrl={coverImage.blurDataUrl} cover />
+    </div>
+  </div>
+</a>

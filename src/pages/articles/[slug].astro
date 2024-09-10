@@ -1,0 +1,92 @@
+---
+import "../../styles/article.css";
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+import { writeflow } from "../../utils/writeflow";
+import type { ExtendedBlock, ExtendedImageBlock } from "@writeflow/types";
+import Image from "../../components/Image.astro";
+import Renderer from "@writeflow/astro";
+import HomeLayout from "../../layouts/HomeLayout.astro";
+
+export const getStaticPaths = (async () => {
+  const articles = await writeflow({
+    apiKey: import.meta.env.WRITEFLOW_API_KEY,
+  }).content.list({
+    fields: { title: true, slug: true, properties: true, body: true },
+  });
+
+  return articles.map((article) => ({
+    params: { slug: article.slug },
+    props: { article },
+  }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { article } = Astro.props as Props;
+
+const sections: { image: ExtendedImageBlock; content: ExtendedBlock[] }[] = [
+  { image: article.body[0] as ExtendedImageBlock, content: [] },
+];
+
+let i = 1;
+while (i < article.body.length) {
+  const block = article.body[i];
+
+  if (block.type === "image") {
+    sections.push({ image: block, content: [] });
+  } else {
+    sections[sections.length - 1].content.push(block);
+  }
+
+  ++i;
+}
+---
+
+<HomeLayout title={article.title}>
+  <div>
+    {
+      sections.map((section, i) => (
+        <div class="h-screen flex flex-col lg:flex-row">
+          <div class="flex-1 h-full" />
+          <div
+            id={`image${i + 1}`}
+            class="fixed top-0 left-0 w-full lg:w-1/2 h-1/2 lg:h-full p-8 lg:p-16"
+            style={{ zIndex: -i * 10 }}
+          >
+            <Image
+              url={section.image.image.file.url}
+              blurDataUrl={section.image.image.file.blurDataUrl}
+              cover
+            />
+          </div>
+          <div id="content" class="flex-1 h-full p-8 lg:p-16 -z-[10000]">
+            <Renderer blocks={section.content} />
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</HomeLayout>
+
+<script>
+  window.addEventListener("scroll", function () {
+    const windowHeight = window.innerHeight;
+    const scrollPosition = window.scrollY;
+    const idx =
+      Math.floor((windowHeight / 2 + scrollPosition) / windowHeight) + 1;
+
+    const prev = document.getElementById("image" + (idx - 1));
+    const cur = document.getElementById("image" + idx);
+    const next = document.getElementById("image" + (idx + 1));
+
+    if (prev) {
+      prev.style.visibility = "hidden";
+    }
+
+    if (next) {
+      next.style.visibility = "hidden";
+    }
+
+    cur!.style.visibility = "visible";
+  });
+</script>
